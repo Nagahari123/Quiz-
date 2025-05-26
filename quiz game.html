@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <title> Quiz Game</title>
+  <link rel="stylesheet" href="./style.css">
+ 
+</head>
+<body>
+  <div class="quiz-container">
+    <div id="quiz">
+      <!-- Quiz content will be injected here -->
+    </div>
+  </div>
+  <script>
+    // Define questions by category
+    const questionsByCategory = {
+      "General Knowledge": [
+        {
+          question: "What is the capital of France?",
+          options: ["Berlin", "London", "Paris", "Rome"],
+          answer: 2
+        },
+        {
+          question: "Which planet is known as the Red Planet?",
+          options: ["Earth", "Mars", "Jupiter", "Venus"],
+          answer: 1
+        },
+        {
+          question: "What is the largest ocean on Earth?",
+          options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
+          answer: 3
+        },
+         {
+          question: "In what year did the Titanic sink?",
+          options: ["1905", "1910", "1912", "1920"],
+          answer: 2
+        },
+        {
+          question: "Who was the first President of the United States?",
+          options: ["George Washington", "Thomas Jefferson", "Abraham Lincoln", "John Adams"],
+          answer: 0
+        },
+        {
+          question: "What is the smallest country in the world by are ?",
+          options: ["Vatican City", "Monaco", "Marshall Islands", "Maldives"],
+          answer: 0
+        }
+      ],
+      "Literature": [
+       {
+          question: "Who was the author of the famous storybook ‘Alice’s Adventures in Wonderland’?",
+          options: ["Rudyard Kipling", "John Keats", "Lewis Carroll", "H G Wells"],
+          answer: 2
+        },
+        {
+          question: "How many novels combine the Harry Potter series collection?",
+          options: ["3", "7", "9", "11"],
+          answer: 1
+        },
+        {
+           question:"Who is the author of 'War and Peace'?",
+           options:["Franz kafka","Gabriel garcia marquez","leo tolstoy","fyodor destoyevsky"],
+           answer:2
+                },
+        {
+          question: "Which novel begins with 'Call me Ishmael'?",
+          options: ["Moby-Dick", "Pride and Prejudice", "1984", "The Great Gatsby"],
+          answer: 0
+        }
+      ],
+        "Science": [
+            {
+            question: "What is the chemical symbol for water?",
+            options: ["H2O", "CO2", "O2", "NaCl"],
+            answer: 0
+            },
+            {
+            question: "What is the powerhouse of the cell?",
+            options: ["Nucleus", "Ribosome", "Mitochondria", "Endoplasmic Reticulum"],
+            answer: 2
+            }
+        ],
+         "Sports": [
+    {
+      question: "Which country won the highest number of medals in the 2024 Olympics?",
+      options: ["USA", "China", "Brazil", "India"],
+      answer: 0
+    },
+    {
+      question: "Which country won the first T20 World Cup?",
+      options: ["India", "Pakistan", "England", "Australia"],
+      answer: 0
+    },
+    {
+      question: "Which country was the champion of the first Cricket World Cup held in 1975?",
+      options: ["Australia", "England", "New Zealand", "West Indies"],
+      answer: 3
+    }
+]
+    };
+    let selectedCategory = null;
+    let questions = [];
+    let currentQuestion = 0;
+    let score = 0;
+    let timer = 15;
+    let timerInterval = null;
+    let userAnswers = [];
+
+    function showCategorySelection() {
+      let html = `<div class="category-select"><label for="category">Choose a category:</label>
+        <select id="category">
+          <option value="" disabled selected>Select</option>`;
+      for (let cat in questionsByCategory) {
+        html += `<option value="${cat}">${cat}</option>`;
+      }
+      html += `</select>
+        <button onclick="startQuiz()">Start Quiz</button>
+      </div>`;
+      document.getElementById('quiz').innerHTML = html;
+    }
+
+    function startQuiz() {
+      const select = document.getElementById('category');
+      selectedCategory = select.value;
+      if (!selectedCategory) return;
+      questions = questionsByCategory[selectedCategory];
+      currentQuestion = 0;
+      score = 0;
+      userAnswers = [];
+      showQuestion();
+    }
+
+    function showQuestion() {
+      clearInterval(timerInterval);
+      timer = 15;
+      const q = questions[currentQuestion];
+      let html = `<div class="question"><b>Q${currentQuestion+1}:</b> ${q.question}</div>
+        <ul class="options">`;
+      q.options.forEach((option, idx) => {
+        html += `<li><button onclick="submitAnswer(${idx})">${option}</button></li>`;
+      });
+      html += `</ul>
+        <div class="timer" id="timer">Time left: ${timer}s</div>
+        <div class="score">Score: ${score}/${questions.length}</div>`;
+      document.getElementById('quiz').innerHTML = html;
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+      timer--;
+      document.getElementById('timer').textContent = `Time left: ${timer}s`;
+      if (timer <= 0) {
+        clearInterval(timerInterval);
+        submitAnswer(null, true);
+      }
+    }
+
+    function submitAnswer(selected, timedOut=false) {
+      clearInterval(timerInterval);
+      const q = questions[currentQuestion];
+      let isCorrect = (selected === q.answer);
+      let feedback = '';
+      if (timedOut) {
+        feedback = `<span class="wrong">Time's up!</span> The correct answer was: <b>${q.options[q.answer]}</b>`;
+        userAnswers.push({question: q.question, selected: null, correct: q.answer, isCorrect: false});
+      } else if (selected === q.answer) {
+        feedback = `<span class="correct">Correct!</span>`;
+        score++;
+        userAnswers.push({question: q.question, selected, correct: q.answer, isCorrect: true});
+      } else {
+        feedback = `<span class="wrong">Wrong!</span> The correct answer was: <b>${q.options[q.answer]}</b>`;
+        userAnswers.push({question: q.question, selected, correct: q.answer, isCorrect: false});
+      }
+      let html = `<div class="question"><b>Q${currentQuestion+1}:</b> ${q.question}</div>
+        <ul class="options">`;
+      q.options.forEach((option, idx) => {
+        let cls = '';
+        if (idx === q.answer) cls = 'correct';
+        else if (selected === idx) cls = 'wrong';
+        html += `<li><button disabled class="${cls}">${option}</button></li>`;
+      });
+      html += `</ul>
+        <div>${feedback}</div>
+        <div class="score">Score: ${score}/${questions.length}</div>`;
+      if (currentQuestion < questions.length - 1) {
+        html += `<button onclick="nextQuestion()">Next</button>`;
+      } else {
+        html += `<button onclick="endQuiz()">Finish</button>`;
+      }
+      document.getElementById('quiz').innerHTML = html;
+    }
+
+    function nextQuestion() {
+      currentQuestion++;
+      showQuestion();
+    }
+
+    function endQuiz() {
+      let html = `<div class="score">Quiz Over!<br>Your score: ${score}/${questions.length}</div>`;
+      html += `<div class="review"><b>Answer Review:</b><ol>`;
+      userAnswers.forEach((ua, idx) => {
+        html += `<li>
+          ${ua.question}<br>
+          Your answer: <span class="${ua.isCorrect ? 'correct' : 'wrong'}">${
+            ua.selected !== null ? questions[idx].options[ua.selected] : 'No answer'
+          }</span><br>
+          Correct answer: <b>${questions[idx].options[ua.correct]}</b>
+        </li>`;
+      });
+      html += `</ol></div>
+        <button onclick="restartQuiz()">Restart Quiz</button>
+        <button onclick="showCategorySelection()">Change Category</button>`;
+      document.getElementById('quiz').innerHTML = html;
+    }
+
+    function restartQuiz() {
+      currentQuestion = 0;
+      score = 0;
+      userAnswers = [];
+      showQuestion();
+    }
+
+    // Expose functions for inline event handlers
+    window.startQuiz = startQuiz;
+    window.submitAnswer = submitAnswer;
+    window.nextQuestion = nextQuestion;
+    window.endQuiz = endQuiz;
+    window.restartQuiz = restartQuiz;
+    window.showCategorySelection = showCategorySelection;
+
+    // Initialize
+    showCategorySelection();
+  </script>
+</body>
+</html>
